@@ -37,6 +37,7 @@ import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import com.android.launcher3.BadgeProvider
 import com.android.launcher3.Flags
+import com.android.launcher3.icons.ThemedIconSettings
 import com.android.launcher3.icons.BaseIconFactory
 import com.android.launcher3.icons.BitmapInfo
 import com.android.launcher3.icons.ClockDrawableWrapper.ClockAnimationInfo
@@ -79,10 +80,13 @@ class MonoIconThemeController(
             }
         }
 
+        val padding = ThemedIconSettings.getIconInsetInPixels(factory.context, factory.iconBitmapSize)
+
         val mono = icon.monochrome
         if (mono != null) {
+            val monoBitmap = InsetDrawable(mono, -getExtraInsetFraction())
             return MonoThemedBitmap(
-                InsetDrawable(mono, -getExtraInsetFraction()).toAlphaBitmap(factory.iconBitmapSize),
+                monoBitmap.toAlphaBitmap(factory.iconBitmapSize, padding),
                 colorProvider,
             )
         }
@@ -98,7 +102,7 @@ class MonoIconThemeController(
             val monoFactory = MonochromeIconFactory(info.icon.width)
             val wrappedIcon = monoFactory.wrap(icon)
             return MonoThemedBitmap(
-                wrappedIcon.toAlphaBitmap(factory.iconBitmapSize),
+                wrappedIcon.toAlphaBitmap(factory.iconBitmapSize, padding),
                 colorProvider,
                 monoFactory.luminanceDiff,
             )
@@ -107,11 +111,18 @@ class MonoIconThemeController(
         return ThemedBitmap.NOT_SUPPORTED
     }
 
-    private fun Drawable.toAlphaBitmap(size: Int): Bitmap {
-        val result = Bitmap.createBitmap(size, size, ALPHA_8)
+    private fun Drawable.toAlphaBitmap(size: Int, padding: Int = 0): Bitmap {
+        val bmp = Bitmap.createBitmap(size, size, ALPHA_8)
+        val canvas = Canvas(bmp)
+        if (padding > 0) {
+            val s = (size - 2f * padding) / size
+            canvas.save()
+            canvas.scale(s, s, size / 2f, size / 2f)
+        }
         setBounds(0, 0, size, size)
-        draw(Canvas(result))
-        return result
+        draw(canvas)
+        if (padding > 0) canvas.restore()
+        return bmp
     }
 
     override fun decode(
@@ -157,10 +168,11 @@ class MonoIconThemeController(
         originalIcon.mutate()
         originalIcon.monochrome?.let {
             val colors = colorProvider(context)
-            it.setTint(colors.iconForegroundColor)
+            val monoDrawable = InsetDrawable(it.mutate(), ThemedIconSettings.getIconInsetFraction(context))
+            monoDrawable.setTint(colors.iconForegroundColor)
             return@createThemedAdaptiveIcon AdaptiveIconDrawable(
                 ColorDrawable(colors.iconBackgroundColor),
-                it,
+                monoDrawable,
             )
         }
 

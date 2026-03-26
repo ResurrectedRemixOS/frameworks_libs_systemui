@@ -29,6 +29,7 @@ import com.android.launcher3.icons.GraphicsUtils.getColorMultipliedFilter
 import com.android.launcher3.icons.GraphicsUtils.resizeToContentSize
 import com.android.launcher3.icons.IconShape
 import com.android.launcher3.icons.R
+import com.android.launcher3.icons.ThemedIconSettings
 
 /** Drawing delegate handle monochrome themed app icons */
 class ThemedIconDelegate(
@@ -103,10 +104,9 @@ class ThemedIconDelegate(
         fun getColors(context: Context): ColorList {
             val res = context.resources
             return ColorList(
-                iconBackgroundColor = res.getColor(R.color.themed_icon_background_color),
-                iconForegroundColor = res.getColor(R.color.themed_icon_color),
-                iconAdaptiveBackgroundColor =
-                    res.getColor(R.color.themed_icon_adaptive_background_color),
+                iconBackgroundColor = ThemedIconSettings.getBackgroundColor(context),
+                iconForegroundColor = ThemedIconSettings.getForegroundColor(context),
+                iconAdaptiveBackgroundColor = ThemedIconSettings.getAdaptiveBackgroundColor(context),
                 badgeBackgroundColor = res.getColor(R.color.themed_badge_icon_background_color),
                 badgeForegroundColor = res.getColor(R.color.themed_badge_icon_color),
             )
