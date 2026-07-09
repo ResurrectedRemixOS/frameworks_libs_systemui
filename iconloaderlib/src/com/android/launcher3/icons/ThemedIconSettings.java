@@ -35,7 +35,7 @@ public final class ThemedIconSettings {
     public static final String COLOR_PRESET_AOSP = "aosp";
     public static final String COLOR_PRESET_CUSTOM = "custom";
 
-    public static final int DEFAULT_ICON_SCALE = 72;
+    public static final int DEFAULT_ICON_SCALE = 100;
     public static final int MIN_ICON_SCALE = 48;
     public static final int MAX_ICON_SCALE = 100;
 
