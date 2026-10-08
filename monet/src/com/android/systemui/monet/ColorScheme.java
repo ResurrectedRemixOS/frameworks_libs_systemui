@@ -29,6 +29,7 @@ import com.android.internal.graphics.ColorUtils;
 import com.google.ux.material.libmonet.dynamiccolor.ColorSpec.SpecVersion;
 import com.google.ux.material.libmonet.dynamiccolor.DynamicScheme;
 import com.google.ux.material.libmonet.dynamiccolor.DynamicScheme.Platform;
+import com.google.ux.material.libmonet.dynamiccolor.Variant;
 import com.google.ux.material.libmonet.hct.Hct;
 import com.google.ux.material.libmonet.scheme.SchemeCmf;
 import com.google.ux.material.libmonet.scheme.SchemeContent;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -129,6 +131,38 @@ public class ColorScheme {
                     contrastLevel);
             default -> throw new IllegalArgumentException("Unknown style: " + style);
         };
+
+        mAccent1 = new TonalPalette(mMaterialScheme.primaryPalette);
+        mAccent2 = new TonalPalette(mMaterialScheme.secondaryPalette);
+        mAccent3 = new TonalPalette(mMaterialScheme.tertiaryPalette);
+        mNeutral1 = new TonalPalette(mMaterialScheme.neutralPalette);
+        mNeutral2 = new TonalPalette(mMaterialScheme.neutralVariantPalette);
+        mError = new TonalPalette(mMaterialScheme.errorPalette);
+    }
+
+    /**
+     * Tonal spot roles with a primary palette at the seed's own chroma. Accent presets keep
+     * their saturation without content's source-tone containers, which push light seeds'
+     * primary to near white.
+     */
+    public ColorScheme(@ColorInt int seed, boolean isDark, double contrastLevel,
+            boolean keepSeedChroma) {
+        this.mSeeds = List.of(seed);
+        this.mIsDark = isDark;
+        this.mStyle = ThemeStyle.TONAL_SPOT;
+        this.mContrast = contrastLevel;
+
+        Hct seedHct = Hct.fromInt(seed == Color.TRANSPARENT ? GOOGLE_BLUE : seed);
+        mProposedSeedHcts = List.of(seedHct);
+        DynamicScheme tonal = new SchemeTonalSpot(List.of(seedHct), isDark, contrastLevel,
+                SpecVersion.SPEC_2026, DynamicScheme.DEFAULT_PLATFORM);
+        mMaterialScheme = !keepSeedChroma ? tonal : new DynamicScheme(seedHct,
+                Variant.TONAL_SPOT, isDark, contrastLevel, DynamicScheme.DEFAULT_PLATFORM,
+                SpecVersion.SPEC_2026,
+                com.google.ux.material.libmonet.palettes.TonalPalette.fromHueAndChroma(
+                        seedHct.getHue(), seedHct.getChroma()),
+                tonal.secondaryPalette, tonal.tertiaryPalette, tonal.neutralPalette,
+                tonal.neutralVariantPalette, Optional.of(tonal.errorPalette));
 
         mAccent1 = new TonalPalette(mMaterialScheme.primaryPalette);
         mAccent2 = new TonalPalette(mMaterialScheme.secondaryPalette);
