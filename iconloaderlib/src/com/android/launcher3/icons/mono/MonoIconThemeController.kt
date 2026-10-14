@@ -87,6 +87,13 @@ class MonoIconThemeController(
             )
         }
 
+        // RR: neon icons give an app without a monochrome icon its first letter.
+        if (NeonIcons.enabled && sourceHint != null) {
+            NeonIcons.letterBitmap(
+                factory.context, sourceHint.key.componentName.packageName, factory.iconBitmapSize
+            )?.let { return MonoThemedBitmap(it, colorProvider) }
+        }
+
         if (Flags.forceMonochromeAppIcons() && shouldForceThemeIcon) {
             val monoFactory = MonochromeIconFactory(info.icon.width)
             val wrappedIcon = monoFactory.wrap(icon)

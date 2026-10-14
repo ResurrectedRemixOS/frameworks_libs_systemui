@@ -47,10 +47,8 @@ class ThemedIconDelegate(
         }
 
     private val shapeBounds = Rect(0, 0, bitmapInfo.icon.width, bitmapInfo.icon.height)
-    private val neonPaint =
-        Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-            colorFilter = getColorMultipliedFilter(NeonIcons.ringColor, null)
-        }
+    private val neonPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private var neonColor = 0
 
     init {
         paint.color = constantState.colorBg
@@ -64,8 +62,13 @@ class ThemedIconDelegate(
         paint: Paint,
     ) {
         if (NeonIcons.enabled) {
-            // RR: the glyph in the accent on a glowing ring.
-            val glyph = NeonIcons.drawRing(canvas, bounds, monoPaint.alpha)
+            // RR: the glyph in the ring's color on a glowing ring.
+            val color = NeonIcons.colorFor(bitmapInfo.color)
+            if (color != neonColor) {
+                neonColor = color
+                neonPaint.colorFilter = getColorMultipliedFilter(color, null)
+            }
+            val glyph = NeonIcons.drawRing(canvas, bounds, monoPaint.alpha, color)
             neonPaint.alpha = monoPaint.alpha
             canvas.drawBitmap(monoIcon, null, glyph, neonPaint)
             return
@@ -89,7 +92,8 @@ class ThemedIconDelegate(
 
     override fun isThemed() = true
 
-    override fun getIconColor(info: BitmapInfo) = if (NeonIcons.enabled) NeonIcons.ringColor else colorFg
+    override fun getIconColor(info: BitmapInfo) =
+        if (NeonIcons.enabled) NeonIcons.colorFor(info.color) else colorFg
 
     companion object {
         const val TAG: String = "ThemedIconDrawable"
