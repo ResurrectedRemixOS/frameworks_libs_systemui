@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="google_author">"Google"</string>
+    <string name="app_name">ವೆದರ್ ಎಫೆಕ್ಟ್‌ಗಳು</string>
+    <string name="wallpaper_description">ಲೈವ್ ವೆದರ್ ಎಫೆಕ್ಟ್‌ಗಳೊಂದಿಗಿನ ವಾಲ್‌ಪೇಪರ್</string>
 </resources>

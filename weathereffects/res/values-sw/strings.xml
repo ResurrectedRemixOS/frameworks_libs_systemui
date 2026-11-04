@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="google_author">"Google"</string>
+    <string name="app_name">Athari za Hali ya Hewa</string>
+    <string name="wallpaper_description">Mandhari yenye athari za moja kwa moja za hali ya hewa</string>
 </resources>

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="google_author">"I-Google"</string>
+    <string name="app_name">Imiphumela Yesimo Sezulu</string>
+    <string name="wallpaper_description">Isithombe sangemuva esinemiphumela yesimo sezulu ephilayo</string>
 </resources>
