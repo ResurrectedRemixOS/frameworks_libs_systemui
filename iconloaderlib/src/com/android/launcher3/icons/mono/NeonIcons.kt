@@ -11,7 +11,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.Typeface
+import android.util.LruCache
+import kotlin.math.ceil
 
 /**
  * RR neon icons: themed icons drawn as the app's glyph inside a glowing ring, like the RR
@@ -34,10 +37,21 @@ object NeonIcons {
 
     private const val LIGHT_DISC = 0xFFF7F3F4.toInt()
     private val STROKES = floatArrayOf(0.03f, 0.045f, 0.065f)
+    /** Rings are rendered per [BUCKET] px of size and drawn scaled down to fit. */
+    private const val BUCKET = 64
 
     private val disc = Paint(Paint.ANTI_ALIAS_FLAG)
     private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val draw = Paint(Paint.FILTER_BITMAP_FLAG)
+    private val dst = RectF()
+
+    private data class Key(val size: Int, val thickness: Int, val glow: Int, val light: Boolean)
+
+    /** Blurring the glow is the slow part, so ring masks are kept; the color goes on at draw. */
+    private val rings = object : LruCache<Key, Bitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: Key, value: Bitmap) = value.byteCount
+    }
 
     /** The ring's color for an app whose icon averages [iconColor]. */
     @JvmStatic
@@ -73,25 +87,43 @@ object NeonIcons {
     /** Returns the ring's radius. */
     private fun drawRing(canvas: Canvas, cx: Float, cy: Float, size: Float, alpha: Int,
             color: Int): Float {
-        val stroke = size * STROKES[thickness.coerceIn(0, STROKES.size - 1)]
-        val r = size / 2f - stroke * 2.2f
+        val thick = thickness.coerceIn(0, STROKES.size - 1)
+        val r = size / 2f - size * STROKES[thick] * 2.2f
         disc.color = if (light) LIGHT_DISC else discColor
         disc.alpha = alpha
         canvas.drawCircle(cx, cy, r, disc)
-        val glowStrength = glow.coerceIn(0, 100) / 100f * (if (light) 0.5f else 1f)
+        val bucket = ceil(size / BUCKET).toInt().coerceAtLeast(1) * BUCKET
+        val key = Key(bucket, thick, glow.coerceIn(0, 100), light)
+        val mask = rings.get(key) ?: render(key).also { rings.put(key, it) }
+        val half = mask.width / 2f * size / bucket
+        dst.set(cx - half, cy - half, cx + half, cy + half)
+        draw.color = color
+        draw.alpha = alpha
+        canvas.drawBitmap(mask, null, dst, draw)
+        return r
+    }
+
+    /** The ring and its glow at [Key.size] as an alpha mask, with room around for the glow. */
+    private fun render(key: Key): Bitmap {
+        val size = key.size.toFloat()
+        val stroke = size * STROKES[key.thickness]
+        val margin = ceil(stroke * 5f).toInt()
+        val side = key.size + 2 * margin
+        val mask = Bitmap.createBitmap(side, side, Bitmap.Config.ALPHA_8)
+        val canvas = Canvas(mask)
+        val c = side / 2f
+        val r = size / 2f - stroke * 2.2f
+        val glowStrength = key.glow / 100f * (if (key.light) 0.5f else 1f)
         if (glowStrength > 0f) {
-            glowPaint.color = color
-            glowPaint.alpha = (alpha * 0.85f * glowStrength).toInt()
+            glowPaint.alpha = (255 * 0.85f * glowStrength).toInt()
             glowPaint.strokeWidth = stroke * 2.4f
             glowPaint.maskFilter = BlurMaskFilter(stroke * (1f + 2f * glowStrength),
                 BlurMaskFilter.Blur.NORMAL)
-            canvas.drawCircle(cx, cy, r, glowPaint)
+            canvas.drawCircle(c, c, r, glowPaint)
         }
-        ring.color = color
-        ring.alpha = alpha
         ring.strokeWidth = stroke
-        canvas.drawCircle(cx, cy, r, ring)
-        return r
+        canvas.drawCircle(c, c, r, ring)
+        return mask
     }
 
     /**
