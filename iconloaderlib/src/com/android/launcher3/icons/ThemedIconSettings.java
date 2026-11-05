@@ -29,7 +29,7 @@ public final class ThemedIconSettings {
     public static final String KEY_BACKGROUND_COLOR = "themed_icon_background_color";
     public static final String KEY_FOREGROUND_COLOR = "themed_icon_foreground_color";
     public static final String KEY_COLOR_PRESET = "themed_icon_color_preset";
-    public static final String KEY_THEMED_ICONS = "themed_icons";
+    public static final String KEY_CUSTOMIZE = "themed_icon_customize";
 
     public static final String COLOR_PRESET_AXICONS = "axicons";
     public static final String COLOR_PRESET_AOSP = "aosp";
@@ -52,12 +52,15 @@ public final class ThemedIconSettings {
                 + "," + getColorPreset(context);
     }
 
-    public static boolean isThemedIconsEnabled(@Nullable Context context) {
+    public static boolean isCustomized(@Nullable Context context) {
         return context != null && Settings.Secure.getInt(
-                context.getContentResolver(), KEY_THEMED_ICONS, 0) == 1;
+                context.getContentResolver(), KEY_CUSTOMIZE, 0) == 1;
     }
 
     public static int getIconScale(@NonNull Context context) {
+        if (!isCustomized(context)) {
+            return DEFAULT_ICON_SCALE;
+        }
         return clamp(Settings.Secure.getInt(
                 context.getContentResolver(), KEY_ICON_SCALE, DEFAULT_ICON_SCALE),
                 MIN_ICON_SCALE, MAX_ICON_SCALE);
@@ -151,6 +154,9 @@ public final class ThemedIconSettings {
 
     @NonNull
     public static String getColorPreset(@NonNull Context context) {
+        if (!isCustomized(context)) {
+            return COLOR_PRESET_AOSP;
+        }
         String preset = Settings.Secure.getString(context.getContentResolver(), KEY_COLOR_PRESET);
         if (isColorPreset(preset)) {
             return preset;
@@ -161,7 +167,7 @@ public final class ThemedIconSettings {
         Integer foreground = parseColor(Settings.Secure.getString(
                 context.getContentResolver(), KEY_FOREGROUND_COLOR));
         if (background == null && foreground == null) {
-            return COLOR_PRESET_AXICONS;
+            return COLOR_PRESET_AOSP;
         }
         if (background != null && foreground != null) {
             if (matchesDefaultColors(context, background, foreground, COLOR_PRESET_AXICONS)) {
